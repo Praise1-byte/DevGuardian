@@ -103,7 +103,7 @@ function App() {
       setReport(null);
 
       const response = await fetch(
-        `http://localhost:5000/api/repositories/${owner}/${repo}/review`,
+        `https://devguardian-1.onrender.com/api/repositories/${owner}/${repo}/review`,
         {
           method: "POST",
         }
