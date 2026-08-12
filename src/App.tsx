@@ -626,9 +626,9 @@ function App() {
                       {label}
                     </span>
 
-                    <strong
-                      className={type}
-                    >
+                   <strong
+  className={String(type)}
+>
                       {value}
                     </strong>
 
