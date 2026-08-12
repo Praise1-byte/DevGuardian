@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 
 import express from "express";
@@ -9,20 +10,29 @@ import { reviewRepository } from "./services/repository-review.service";
 import { getFileContent } from "./services/github-content.service";
 import { analyzeCode } from "./services/code-analyzer.service";
 import {
-  getRepository,
   getRepositoryFiles,
 } from "./services/github.service";
 
 import { filterSourceFiles } from "./services/file-filter.service";
 
 const app = express();
-const PORT = 5000;
+
+const PORT = Number(process.env.PORT) || 5000;
+
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || "http://localhost:5173";
 
 /* ========================================
    MIDDLEWARE
 ======================================== */
 
-app.use(cors());
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 /* ========================================
@@ -37,8 +47,9 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: FRONTEND_URL,
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
@@ -59,7 +70,6 @@ io.on("connection", (socket) => {
     `👨‍💻 Developers online: ${activeDevelopers}`
   );
 
-  // Send the current count to EVERY connected client
   io.emit("live-users", activeDevelopers);
 
   socket.on("disconnect", () => {
@@ -76,7 +86,6 @@ io.on("connection", (socket) => {
       `👨‍💻 Developers online: ${activeDevelopers}`
     );
 
-    // Update everyone
     io.emit("live-users", activeDevelopers);
   });
 });
@@ -111,8 +120,8 @@ app.get(
   "/api/repositories/:owner/:repo/files",
   async (req, res) => {
     try {
-      const owner = req.params.owner as string;
-      const repo = req.params.repo as string;
+      const owner = req.params.owner;
+      const repo = req.params.repo;
 
       const files = await getRepositoryFiles(
         owner,
@@ -152,8 +161,8 @@ app.get(
   "/api/repositories/:owner/:repo/review-file",
   async (req, res) => {
     try {
-      const owner = req.params.owner as string;
-      const repo = req.params.repo as string;
+      const owner = req.params.owner;
+      const repo = req.params.repo;
       const path = req.query.path as string;
 
       if (!path) {
@@ -207,8 +216,8 @@ app.post(
   "/api/repositories/:owner/:repo/review",
   async (req, res) => {
     try {
-      const owner = req.params.owner as string;
-      const repo = req.params.repo as string;
+      const owner = req.params.owner;
+      const repo = req.params.repo;
 
       const report = await reviewRepository(
         owner,
@@ -240,12 +249,17 @@ app.post(
    START SERVER
 ======================================== */
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(
-    `🚀 DevGuardian API running on http://localhost:${PORT}`
+    `🚀 DevGuardian API running on port ${PORT}`
   );
 
   console.log(
     `⚡ WebSocket server ready for live developers`
   );
+
+  console.log(
+    `🌐 Frontend origin: ${FRONTEND_URL}`
+  );
 });
+
